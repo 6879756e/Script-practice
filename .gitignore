@@ -1,0 +1,6 @@
+**/**.DS_STORE
+**/**.xml
+**/**.iml
+
+**/dictionaries
+**/.name
