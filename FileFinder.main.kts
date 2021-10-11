@@ -76,7 +76,7 @@ fun printAllFilesInFolder() {
 }
 
 fun File.isWhatWeAreLookingFor(): Boolean {
-    if (!this.isHidden) return this.endsWith(fileType)
+    if (!this.isHidden) return name.endsWith(fileType)
 
     return this.endsWith(fileType) && showHidden
 }
