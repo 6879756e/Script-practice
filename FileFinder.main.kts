@@ -4,7 +4,9 @@ private val pwd = File("")
 private val S = "    "
 private val fileType by lazy { args[0] }
 private val verbose: Boolean
-    get() = if (args.size > 1) args[1] == "v" else false
+    get() = args.contains("v")
+private val showHidden: Boolean
+    get() = args.contains("h")
 
 main()
 
@@ -34,7 +36,7 @@ NAME
     FileFinder -- finds all files of a specific types in the directory and all its subdirectories
     
 SYNOPSIS
-    kotlinc -script FileFinder.main.kts [string ...]"
+    kotlinc -script FileFinder.main.kts -f -v -h"
     
 DESCRIPTION
     The file finder, as the name suggests, helps find files of a particular type.
@@ -45,18 +47,20 @@ DESCRIPTION
     
     -v    Lists all files (default is 5)
     
+    -h    Shows hidden files (default is off)
+    
     """
     )
 
 }
 
 fun printAllFilesInFolder() {
-    val filesList = pwd.absoluteFile.list()
+    val filesList = pwd.absoluteFile.listFiles()
     println("Searching in the follow directory: ${pwd.absoluteFile}")
 
     val sb = StringBuilder()
 
-    filesList?.filter { it.endsWith(fileType) }?.forEach { sb.appendLine("$S$it") }
+    filesList?.filter { it.isWhatWeAreLookingFor() }?.forEach { sb.appendLine("$S$it") }
 
     val result = when {
         sb.isEmpty() -> "No files of the type: $fileType exists"
@@ -68,6 +72,11 @@ fun printAllFilesInFolder() {
                     "Tip: Use the -v flag to list all results!"
         }
     }
-
     println(result)
+}
+
+fun File.isWhatWeAreLookingFor(): Boolean {
+    if (!this.isHidden) return this.endsWith(fileType)
+
+    return this.endsWith(fileType) && showHidden
 }
