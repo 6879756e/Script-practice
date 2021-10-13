@@ -2,30 +2,24 @@ import java.io.File
 
 private val pwd = File("")
 private val S = "    "
+
+// Related to arguments
+private val legalArguments = setOf("man", "v", "h")
+private lateinit var illegalArgument: String
 private val fileType by lazy { args[0] }
 private val verbose: Boolean
     get() = args.contains("v")
 private val showHidden: Boolean
     get() = args.contains("h")
 
-main()
-
-fun pwd(): String {
-    try {
-        val filePath = File("").absoluteFile
-        return "This script is being called from the following directory: $filePath"
-    } catch (e: SecurityException) {
-        println("A required system property value cannot be accessed.")
-        throw e
-    }
-}
-
 fun main() {
-    if (args.isEmpty()) {
-        printManualUsage()
-        return
+    when {
+        args.isEmpty() || args[0] == "man" -> printManualUsage()
+
+        args.containsIllegalArgument() -> printIllegalArgumentMessage()
+
+        else -> printAllFilesInFolder()
     }
-    printAllFilesInFolder()
 }
 
 fun printManualUsage() {
@@ -54,6 +48,21 @@ DESCRIPTION
 
 }
 
+fun Array<String>.containsIllegalArgument(): Boolean {
+    for (i in 1 until this.size) {
+        if (this[i] !in legalArguments) {
+            illegalArgument = this[i]
+            return true
+        }
+    }
+    return false
+}
+
+fun printIllegalArgumentMessage() {
+    println("Sorry, we could not recognise the command $illegalArgument.\n" +
+            "Please run kotlinc -script FileFinder.main.kts man to find out possible use cases.")
+}
+
 fun printAllFilesInFolder() {
     val filesList = pwd.absoluteFile.listFiles()
     println("Searching in the follow directory: ${pwd.absoluteFile}")
@@ -64,12 +73,17 @@ fun printAllFilesInFolder() {
 
     val result = when {
         sb.isEmpty() -> "No files of the type: $fileType exists"
-        (verbose || sb.lines().size < 5) -> sb.lines().sorted().joinToString("\n")
+
+        verbose || sb.lines().size < 5 -> sb.lines().sorted().joinToString("\n$S")
+
         else -> {
-            sb.lines().take(5).sorted().joinToString("\n") +
-                    "\n$S...\n" +
-                    "As there were a lot of results, we only listed the first 5!\n" +
-                    "Tip: Use the -v flag to list all results!"
+"""
+${sb.lines().take(5).sorted().joinToString("\n")}
+$S...
+
+As there were a lot of results (${sb.lines().size}), we only listed the first 5!
+Tip: Use the -v flag to list all results!
+"""
         }
     }
     println(result)
@@ -80,3 +94,5 @@ fun File.isWhatWeAreLookingFor(): Boolean {
 
     return this.endsWith(fileType) && showHidden
 }
+
+main()
